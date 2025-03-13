@@ -1,41 +1,52 @@
+import { signIn } from "@/api/sign-in";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
+import { useMutation } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import {useForm} from 'react-hook-form'
-import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const signInFormSchema = z.object({
-    email: z.string().email(),
-})
+  email: z.string().email(),
+});
 
-type signInForm = z.infer<typeof signInFormSchema>
+type signInForm = z.infer<typeof signInFormSchema>;
 
 export function SignIn() {
-    const { register, handleSubmit, formState: {isSubmitting} } = useForm<signInForm>();
 
-    async function handleSignIn(data: signInForm) {
-      try {
-     
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        toast.success('Enviamos um link de autenticação para seu e-mail!.', {
-          action: {
-            label: 'Reenviar',
-            onClick: () => handleSignIn(data),
-          },
-        })
-      } catch (error) {
-        toast.error('Credenciais inválidas.')
-      }
+  const [searchParams] = useSearchParams()
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<signInForm>({defaultValues: {email: searchParams.get('email') ?? ''}});
+
+  const { mutateAsync: authenticate } = useMutation({
+    mutationFn: signIn,
+  });
+
+  async function handleSignIn(data: signInForm) {
+    try {
+      await authenticate({ email: data.email });
+      toast.success("Enviamos um link de autenticação para seu e-mail!.", {
+        action: {
+          label: "Reenviar",
+          onClick: () => handleSignIn(data),
+        },
+      });
+    } catch (error) {
+      toast.error("Credenciais inválidas.");
     }
+  }
   return (
     <>
       <Helmet title="Login" />
       <div className="p-8">
-      <Button variant="ghost" asChild className="absolute right-8 top-8">
-        <Link to="/sign-up" >Novo estabelecimento</Link>
+        <Button variant="ghost" asChild className="absolute top-8 right-8">
+          <Link to="/sign-up">Novo estabelecimento</Link>
         </Button>
         <div className="flex w-[350px] flex-col justify-center gap-6">
           <div className="flex flex-col gap-2 text-center">
@@ -48,10 +59,12 @@ export function SignIn() {
           </div>
           <form onSubmit={handleSubmit(handleSignIn)} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="email">Seu e-mail</Label>
-                <Input id="email" type="email" {...register('email')}></Input>
+              <Label htmlFor="email">Seu e-mail</Label>
+              <Input id="email" type="email" {...register("email")}></Input>
             </div>
-            <Button disabled={isSubmitting} className="w-full" type="submit">Acessar Painel</Button>
+            <Button disabled={isSubmitting} className="w-full" type="submit">
+              Acessar Painel
+            </Button>
           </form>
         </div>
       </div>

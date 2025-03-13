@@ -1,6 +1,8 @@
+import { registerRestaurant } from "@/api/register-restaurant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
+import { useMutation } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,21 +19,29 @@ const signUpFormSchema = z.object({
 type signUpForm = z.infer<typeof signUpFormSchema>;
 
 export function SignUp() {
-
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { isSubmitting },
   } = useForm<signUpForm>();
 
+  const { mutateAsync: registerRestaurantFn } = useMutation({
+    mutationFn: registerRestaurant,
+  });
+
   async function handleSignUp(data: signUpForm) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await registerRestaurantFn({
+        email: data.email,
+        restaurantName: data.restaurantName,
+        managerName: data.managerName,
+        phone: data.phone,
+      });
       toast.success("Restaurante cadastrado com sucesso!.", {
         action: {
           label: "Login",
-          onClick: () => navigate('/sign-in'),
+          onClick: () => navigate(`/sign-in?email=${data.email}`),
         },
       });
       console.log(data);
@@ -86,7 +96,11 @@ export function SignUp() {
 
             <p className="text-muted-foreground px-6 text-center text-sm leading-relaxed">
               Ao continuar, você concorda com nossos <br />
-              <a className="underline underline-offset-4">termos de serviço</a> e <a className="underline underline-offset-4">
+              <a className="underline underline-offset-4">
+                termos de serviço
+              </a>{" "}
+              e{" "}
+              <a className="underline underline-offset-4">
                 politícas de privacidade
               </a>
               .
